@@ -1,7 +1,3 @@
 {
-  "functions": {
-    "api/market.py": {
-      "runtime": "vercel-python@3.0.7"
-    }
-  }
+  "version": 2
 }
