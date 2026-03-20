@@ -1,0 +1,2 @@
+# Sin dependencias externas — usamos solo stdlib de Python 3.x
+# (urllib, json, os, time están incluidas en Python)

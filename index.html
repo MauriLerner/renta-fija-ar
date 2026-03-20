@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Renta Fija AR — LECAPs & BONCAPs</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500&family=DM+Mono:wght@400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f7f6f2;
+    --surface: #ffffff;
+    --border: #e4e2da;
+    --border2: #d0cec5;
+    --text: #1a1917;
+    --muted: #6b6960;
+    --hint: #9c9a92;
+    --blue: #1a5fb4;
+    --blue-bg: #e8f0fb;
+    --green: #1c7a3e;
+    --green-bg: #e6f4ec;
+    --red: #b5281c;
+    --red-bg: #faeaea;
+    --amber: #8a5a00;
+    --amber-bg: #fef3d7;
+    --teal: #0a6e5a;
+    --teal-bg: #e0f5ef;
+    --accent: #1a5fb4;
+    --radius: 8px;
+    --radius-lg: 12px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #16150f;
+      --surface: #1e1d16;
+      --border: #2e2d25;
+      --border2: #3d3c32;
+      --text: #e8e6de;
+      --muted: #9c9a92;
+      --hint: #6b6960;
+      --blue: #6fa3e8;
+      --blue-bg: #162340;
+      --green: #5ec47a;
+      --green-bg: #0f2e1a;
+      --red: #e87070;
+      --red-bg: #2e1212;
+      --amber: #f0b840;
+      --amber-bg: #2a1f00;
+      --teal: #4ecdb4;
+      --teal-bg: #082820;
+      --accent: #6fa3e8;
+    }
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.5; }
+  a { color: var(--accent); text-decoration: none; }
+
+  /* Layout */
+  .container { max-width: 1100px; margin: 0 auto; padding: 0 20px; }
+  header { border-bottom: 1px solid var(--border); background: var(--surface); position: sticky; top: 0; z-index: 10; }
+  .header-inner { display: flex; align-items: center; justify-content: space-between; height: 54px; }
+  .logo { font-size: 15px; font-weight: 500; letter-spacing: -0.3px; }
+  .logo span { color: var(--muted); font-weight: 400; }
+  .header-meta { font-size: 12px; color: var(--hint); display: flex; align-items: center; gap: 12px; }
+  .status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); display: inline-block; }
+  .status-dot.loading { background: var(--amber); animation: pulse 1.2s ease-in-out infinite; }
+  .status-dot.error { background: var(--red); }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+  main { padding: 28px 0 60px; }
+
+  /* Métricas */
+  .metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 28px; }
+  .metric { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 14px 16px; }
+  .metric-label { font-size: 11px; color: var(--hint); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+  .metric-value { font-size: 24px; font-weight: 500; letter-spacing: -0.5px; }
+  .metric-sub { font-size: 11px; color: var(--muted); margin-top: 3px; }
+
+  /* Controles */
+  .controls { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
+  .tab-group { display: flex; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+  .tab { padding: 6px 14px; font-size: 13px; cursor: pointer; background: var(--surface); color: var(--muted); border: none; font-family: inherit; transition: background .12s, color .12s; }
+  .tab:not(:last-child) { border-right: 1px solid var(--border); }
+  .tab.active { background: var(--text); color: var(--bg); font-weight: 500; }
+  .search { flex: 1; min-width: 160px; max-width: 240px; padding: 6px 12px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); color: var(--text); font-family: inherit; font-size: 13px; outline: none; }
+  .search:focus { border-color: var(--border2); }
+  select.filter { padding: 6px 10px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); color: var(--text); font-family: inherit; font-size: 13px; cursor: pointer; }
+  .date-input { padding: 6px 10px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); color: var(--text); font-family: inherit; font-size: 13px; }
+
+  /* Tabla */
+  .table-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; }
+  table { width: 100%; border-collapse: collapse; }
+  thead th { font-size: 11px; font-weight: 500; color: var(--hint); text-transform: uppercase; letter-spacing: 0.4px; padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--border); white-space: nowrap; cursor: pointer; user-select: none; }
+  thead th:not(:first-child) { text-align: right; }
+  thead th:hover { color: var(--muted); }
+  thead th.sorted { color: var(--text); }
+  thead th.sorted::after { content: ' ↓'; }
+  thead th.sorted.asc::after { content: ' ↑'; }
+  tbody tr { border-bottom: 1px solid var(--border); transition: background .08s; }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: var(--bg); }
+  td { padding: 10px 14px; white-space: nowrap; }
+  td:not(:first-child) { text-align: right; font-variant-numeric: tabular-nums; font-family: 'DM Mono', monospace; font-size: 13px; }
+  .ticker { font-weight: 500; font-size: 13px; }
+  .badge { display: inline-block; font-size: 10px; font-weight: 500; padding: 2px 7px; border-radius: 999px; margin-left: 6px; vertical-align: middle; }
+  .badge-lecap { background: var(--blue-bg); color: var(--blue); }
+  .badge-boncap { background: var(--teal-bg); color: var(--teal); }
+  .badge-cer { background: var(--amber-bg); color: var(--amber); }
+  .badge-otro { background: var(--border); color: var(--muted); }
+  .badge-ci { background: var(--border); color: var(--muted); font-size: 10px; padding: 1px 5px; border-radius: 4px; }
+  .badge-24h { background: var(--green-bg); color: var(--green); font-size: 10px; padding: 1px 5px; border-radius: 4px; }
+  .pos { color: var(--green); }
+  .neg { color: var(--red); }
+  .zero { color: var(--hint); }
+  .vto { color: var(--muted); }
+
+  /* Estado vacío / loading */
+  .state { padding: 48px 20px; text-align: center; color: var(--hint); }
+  .state-icon { font-size: 28px; margin-bottom: 10px; opacity: .4; }
+  .state p { font-size: 13px; }
+
+  /* Footer */
+  footer { border-top: 1px solid var(--border); padding: 20px 0; }
+  .footer-inner { display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: var(--hint); }
+
+  /* Responsive */
+  @media (max-width: 600px) {
+    .hide-mobile { display: none; }
+    td, th { padding: 8px 10px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="container">
+    <div class="header-inner">
+      <div class="logo">Renta Fija <span>AR</span></div>
+      <div class="header-meta">
+        <span id="status-text">Cargando...</span>
+        <span class="status-dot loading" id="status-dot"></span>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="container">
+
+    <div class="metrics" id="metrics">
+      <div class="metric"><div class="metric-label">Instrumentos</div><div class="metric-value" id="m-count">—</div><div class="metric-sub" id="m-fecha">—</div></div>
+      <div class="metric"><div class="metric-label">TNA prom. LECAP</div><div class="metric-value" id="m-tna-lecap">—</div><div class="metric-sub">Estimada al vto.</div></div>
+      <div class="metric"><div class="metric-label">TNA prom. BONCAP</div><div class="metric-value" id="m-tna-boncap">—</div><div class="metric-sub">Estimada al vto.</div></div>
+      <div class="metric"><div class="metric-label">Monto total</div><div class="metric-value" id="m-monto">—</div><div class="metric-sub">Todos los instrumentos</div></div>
+    </div>
+
+    <div class="controls">
+      <div class="tab-group" id="tipo-tabs">
+        <button class="tab active" data-tipo="LECAP">LECAPs</button>
+        <button class="tab" data-tipo="BONCAP">BONCAPs</button>
+        <button class="tab" data-tipo="CER">CER</button>
+        <button class="tab" data-tipo="TODOS">Todos</button>
+      </div>
+      <select class="filter" id="plazo-filter">
+        <option value="all">Todos los plazos</option>
+        <option value="0">CI (contado inmediato)</option>
+        <option value="1">24hs</option>
+      </select>
+      <select class="filter" id="seg-filter">
+        <option value="all">Todos los segmentos</option>
+        <option value="2">Seg. 2 (PPT)</option>
+        <option value="8">Seg. 8 (PPT 4h)</option>
+      </select>
+      <input type="text" class="search" id="search" placeholder="Buscar ticker...">
+      <input type="date" class="date-input" id="fecha-input">
+    </div>
+
+    <div class="table-wrap">
+      <div class="state" id="loading-state">
+        <div class="state-icon">◌</div>
+        <p>Cargando datos del MAE...</p>
+      </div>
+      <div id="error-state" class="state" style="display:none">
+        <div class="state-icon">⚠</div>
+        <p id="error-msg">Error al cargar los datos.</p>
+      </div>
+      <table id="main-table" style="display:none">
+        <thead>
+          <tr>
+            <th data-col="ticker">Ticker</th>
+            <th data-col="precioCierre" class="sorted">Precio cierre</th>
+            <th data-col="variacion" class="hide-mobile">Var. %</th>
+            <th data-col="tna">TNA est.</th>
+            <th data-col="monto" class="hide-mobile">Monto</th>
+            <th data-col="vto" class="hide-mobile">Vto.</th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+      <div id="empty-state" class="state" style="display:none">
+        <div class="state-icon">∅</div>
+        <p>Sin resultados para este filtro.</p>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<footer>
+  <div class="container">
+    <div class="footer-inner">
+      <span>Datos: <a href="https://marketdata.mae.com.ar" target="_blank">MAE Market Data</a></span>
+      <span id="cache-info">—</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+const VTO_META = {
+  'S15Y6':{'vto':'2026-05-15'},'S17A6':{'vto':'2026-04-17'},'S29Y6':{'vto':'2026-05-29'},
+  'S30A6':{'vto':'2026-04-30'},'S30N6':{'vto':'2026-11-30'},'S30O6':{'vto':'2026-10-30'},
+  'S30S6':{'vto':'2026-09-30'},'S31G6':{'vto':'2026-08-31'},'S31L6':{'vto':'2026-07-31'},
+  'TTD26':{'vto':'2026-12-19'},'TTJ26':{'vto':'2026-06-19'},'TTS26':{'vto':'2026-09-18'},
+  'T30J6':{'vto':'2026-06-30'},'T30A7':{'vto':'2027-04-30'},'T15E7':{'vto':'2027-01-15'},
+  'T31Y7':{'vto':'2027-01-31'},'M30A6':{'vto':'2026-04-30'},'M31G6':{'vto':'2026-08-31'},
+  'X15Y6':{'vto':'2026-05-15'},'X29Y6':{'vto':'2026-05-29'},'X30N6':{'vto':'2026-11-30'},
+  'X30S6':{'vto':'2026-09-30'},'X31L6':{'vto':'2026-07-31'},'D30A6':{'vto':'2026-04-30'},
+  'TZXM6':{'vto':'2026-06-21'},'TZXO6':{'vto':'2026-10-20'},'TZXD6':{'vto':'2026-12-20'},
+  'TZXM7':{'vto':'2027-06-20'},'TZXD7':{'vto':'2027-12-20'},'TZX26':{'vto':'2026-06-30'},
+  'TZX27':{'vto':'2027-06-30'},'TZX28':{'vto':'2028-06-30'},
+};
+
+let allData = [];
+let sortCol = 'precioCierre';
+let sortAsc = false;
+let tipoActivo = 'LECAP';
+let plazoFilter = 'all';
+let segFilter = 'all';
+let searchQ = '';
+let fechaData = null;
+
+function calcTNA(ticker, precio) {
+  const meta = VTO_META[ticker.toUpperCase()];
+  if (!meta || !precio || precio <= 0) return null;
+  const vto = new Date(meta.vto);
+  const hoy = fechaData ? new Date(fechaData) : new Date();
+  const dias = Math.round((vto - hoy) / 86400000);
+  if (dias <= 0) return null;
+  const rend = (1 / precio) - 1;
+  return rend * (365 / dias) * 100;
+}
+
+function getVtoStr(ticker) {
+  const meta = VTO_META[ticker.toUpperCase()];
+  if (!meta) return '—';
+  const [y, m, d] = meta.vto.split('-');
+  return `${d}/${m}/${y}`;
+}
+
+function fmtNum(n, dec = 4) {
+  if (n === null || n === undefined || isNaN(n) || n === 0) return '—';
+  return n.toFixed(dec);
+}
+
+function fmtMonto(n) {
+  if (!n || n === 0) return '—';
+  if (n >= 1e12) return '$' + (n / 1e12).toFixed(1) + 'T';
+  if (n >= 1e9)  return '$' + (n / 1e9).toFixed(1) + 'B';
+  if (n >= 1e6)  return '$' + (n / 1e6).toFixed(0) + 'M';
+  return '$' + n.toLocaleString('es-AR');
+}
+
+function badgeInstrumento(tipo) {
+  const map = {LECAP:'badge-lecap',BONCAP:'badge-boncap',CER:'badge-cer'};
+  const cls = map[tipo] || 'badge-otro';
+  return `<span class="badge ${cls}">${tipo}</span>`;
+}
+
+function badgePlazo(plazo) {
+  if (plazo === '0' || plazo === 0) return '<span class="badge-ci">CI</span>';
+  if (plazo === '1' || plazo === 1) return '<span class="badge-24h">24hs</span>';
+  return `<span class="badge-ci">${plazo}hs</span>`;
+}
+
+function getFiltered() {
+  return allData.filter(d => {
+    if (tipoActivo !== 'TODOS' && d.instrumento !== tipoActivo) return false;
+    if (plazoFilter !== 'all' && String(d.plazo) !== plazoFilter) return false;
+    if (segFilter !== 'all' && String(d.segmento) !== segFilter) return false;
+    if (searchQ && !d.ticker.toLowerCase().includes(searchQ)) return false;
+    return true;
+  });
+}
+
+function getSorted(data) {
+  return [...data].sort((a, b) => {
+    let av, bv;
+    if (sortCol === 'tna') {
+      av = calcTNA(a.ticker, a.precioCierre) ?? -Infinity;
+      bv = calcTNA(b.ticker, b.precioCierre) ?? -Infinity;
+    } else if (sortCol === 'vto') {
+      const am = VTO_META[a.ticker.toUpperCase()];
+      const bm = VTO_META[b.ticker.toUpperCase()];
+      av = am ? new Date(am.vto).getTime() : 0;
+      bv = bm ? new Date(bm.vto).getTime() : 0;
+    } else if (sortCol === 'ticker') {
+      av = a.ticker; bv = b.ticker;
+      return sortAsc ? av.localeCompare(bv) : bv.localeCompare(av);
+    } else {
+      av = a[sortCol] ?? 0;
+      bv = b[sortCol] ?? 0;
+    }
+    return sortAsc ? av - bv : bv - av;
+  });
+}
+
+function renderTable() {
+  const filtered = getFiltered();
+  const sorted = getSorted(filtered);
+
+  const table = document.getElementById('main-table');
+  const empty = document.getElementById('empty-state');
+  const tbody = document.getElementById('tbody');
+
+  if (sorted.length === 0) {
+    table.style.display = 'none';
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+  table.style.display = 'table';
+
+  tbody.innerHTML = sorted.map(d => {
+    const precio = d.precioCierre || d.precioProm;
+    const precioDisplay = precio > 0 ? fmtNum(precio * 100, 4) : '—';
+    const tna = calcTNA(d.ticker, precio);
+    const tnaDisplay = tna !== null ? tna.toFixed(1) + '%' : '—';
+    const varClass = d.variacion > 0 ? 'pos' : d.variacion < 0 ? 'neg' : 'zero';
+    const varStr = d.variacion !== 0 ? (d.variacion > 0 ? '+' : '') + d.variacion.toFixed(2) + '%' : '—';
+    const showBadge = tipoActivo === 'TODOS' ? badgeInstrumento(d.instrumento) : '';
+
+    return `<tr>
+      <td>
+        <span class="ticker">${d.ticker}</span>
+        ${showBadge}
+        ${badgePlazo(d.plazo)}
+      </td>
+      <td>${precioDisplay}</td>
+      <td class="hide-mobile ${varClass}">${varStr}</td>
+      <td>${tnaDisplay}</td>
+      <td class="hide-mobile">${fmtMonto(d.monto)}</td>
+      <td class="hide-mobile vto">${getVtoStr(d.ticker)}</td>
+    </tr>`;
+  }).join('');
+}
+
+function updateMetrics() {
+  const lecaps = allData.filter(d => d.instrumento === 'LECAP' && d.precioCierre > 0);
+  const boncaps = allData.filter(d => d.instrumento === 'BONCAP' && d.precioCierre > 0);
+
+  const avgTNA = arr => {
+    const tnas = arr.map(d => calcTNA(d.ticker, d.precioCierre)).filter(t => t !== null);
+    if (!tnas.length) return '—';
+    return (tnas.reduce((a, b) => a + b, 0) / tnas.length).toFixed(1) + '%';
+  };
+
+  const totalMonto = allData.reduce((a, b) => a + (b.monto || 0), 0);
+  const uniqTickers = new Set(allData.map(d => d.ticker.split('/')[0])).size;
+
+  document.getElementById('m-count').textContent = uniqTickers;
+  document.getElementById('m-tna-lecap').textContent = avgTNA(lecaps);
+  document.getElementById('m-tna-boncap').textContent = avgTNA(boncaps);
+  document.getElementById('m-monto').textContent = fmtMonto(totalMonto);
+  if (fechaData) {
+    const [y,m,d] = fechaData.split('-');
+    document.getElementById('m-fecha').textContent = `Al ${d}/${m}/${y}`;
+  }
+}
+
+function setStatus(state, text) {
+  const dot = document.getElementById('status-dot');
+  const txt = document.getElementById('status-text');
+  dot.className = 'status-dot ' + (state === 'ok' ? '' : state);
+  txt.textContent = text;
+}
+
+async function loadData(fecha) {
+  setStatus('loading', 'Cargando...');
+  document.getElementById('loading-state').style.display = 'block';
+  document.getElementById('main-table').style.display = 'none';
+  document.getElementById('error-state').style.display = 'none';
+
+  const url = fecha ? `/api/market?fecha=${fecha}` : '/api/market';
+
+  try {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const json = await res.json();
+    if (json.error) throw new Error(json.error);
+
+    allData = json.titulos || [];
+    fechaData = json.fecha;
+
+    document.getElementById('loading-state').style.display = 'none';
+
+    const cacheDate = json.cached_at ? new Date(json.cached_at * 1000).toLocaleTimeString('es-AR', {hour:'2-digit',minute:'2-digit'}) : '—';
+    document.getElementById('cache-info').textContent = `Actualizado: ${cacheDate}`;
+
+    updateMetrics();
+    renderTable();
+    setStatus('ok', `Datos al ${fechaData}`);
+
+  } catch (err) {
+    document.getElementById('loading-state').style.display = 'none';
+    document.getElementById('error-state').style.display = 'block';
+    document.getElementById('error-msg').textContent = 'Error: ' + err.message;
+    setStatus('error', 'Error al cargar');
+  }
+}
+
+// Eventos
+document.querySelectorAll('.tab').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    tipoActivo = btn.dataset.tipo;
+    renderTable();
+  });
+});
+
+document.getElementById('plazo-filter').addEventListener('change', e => { plazoFilter = e.target.value; renderTable(); });
+document.getElementById('seg-filter').addEventListener('change', e => { segFilter = e.target.value; renderTable(); });
+document.getElementById('search').addEventListener('input', e => { searchQ = e.target.value.trim().toLowerCase(); renderTable(); });
+
+document.getElementById('fecha-input').addEventListener('change', e => {
+  if (e.target.value) loadData(e.target.value);
+});
+
+document.querySelectorAll('thead th[data-col]').forEach(th => {
+  th.addEventListener('click', () => {
+    const col = th.dataset.col;
+    if (sortCol === col) sortAsc = !sortAsc;
+    else { sortCol = col; sortAsc = false; }
+    document.querySelectorAll('thead th').forEach(t => { t.classList.remove('sorted','asc'); });
+    th.classList.add('sorted');
+    if (sortAsc) th.classList.add('asc');
+    renderTable();
+  });
+});
+
+// Inicializar con fecha de ayer (último cierre disponible)
+const ayer = new Date();
+ayer.setDate(ayer.getDate() - 1);
+const fechaAyer = ayer.toISOString().split('T')[0];
+document.getElementById('fecha-input').value = fechaAyer;
+loadData(fechaAyer);
+</script>
+</body>
+</html>
