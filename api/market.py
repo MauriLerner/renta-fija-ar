@@ -12,7 +12,7 @@ _cache = {}
 CACHE_TTL = 60 * 60 * 6  # 6 horas (los precios de cierre no cambian en el día)
 
 MAE_BASE = "https://api.mae.com.ar/MarketData/v1"
-API_KEY = os.environ.get("MAE_API_KEY", "")
+API_KEY = os.environ.get("MAE_API_KEY", "nuDX73vj2483KSUgvenkj9t50oA0vgvA4WcuRAER")
 
 LECAP_PREFIXES = ("S1", "S2", "S3", "S4", "S5", "S6", "S7", "S8", "S9", "S0")
 BONCAP_PREFIXES = ("T", "TT", "TY", "TX", "TZ")
